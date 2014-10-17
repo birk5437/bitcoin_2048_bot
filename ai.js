@@ -140,7 +140,12 @@ function RunOneStep() {
 }
 
 var interval = 300;
+var old_interval = 300;
 var timer = null;
+var page_reload_timer = null;
+var interval_reset = null;
+var currentScore = null;
+var previousScore = null;
 
 function Run() {
   RunOneStep();
@@ -149,30 +154,131 @@ function Run() {
 
 function OnKeyPress(event) {
   var code = event.keyCode;
-  if (code == 48) {
+
+  cancel_interval_reset();
+
+
+  if (code == 48) { //0
+    interval = null
     if (timer) {
       window.clearTimeout(timer);
       timer = null;
     }
-  } else if (code == 49) {
+  } else if (code == 49) { //1
     interval = 300;
     if (!timer) {
       Run();
     }
-  } else if (code == 50) {
+  } else if (code == 50) { //2
     interval = 0;
     if (!timer) {
       Run();
     }
-  } else if (code == 51) {
+  } else if (code == 51) { //3
     RunOneStep();
+  } else if (code == 52) { //4
+    interval = 250;
+    if (!timer) {
+      Run();
+    }
+  } else if (code == 53) { //5
+    interval = 150;
+    if (!timer) {
+      Run();
+    }
   }
 }
 
 document.addEventListener("keypress", OnKeyPress);
 
-window.alert("Now you can use 2048 AI to complete the game.\n\n" +
-             "Press '1' to go automatically.\n" +
-             "Press '2' to get faster.\n" +
-             "Press '3' to go one step.\n" +
-             "Press '0' to stop.");
+setTimeout("autoStart()", 5000);
+
+
+
+
+function autoStart(){
+  console.log("autoStart");
+  currentScore = $("#userCurrentBalance").html();
+
+  $(document).ajaxSend(function(e, jqxhr, settings){
+  // $(document).ajaxStart(function(){
+    // if (settings.url === "/calculateBalance" || settings.url === "/updateScore"){
+      console.log("ajaxStart");
+      cancel_run_timer();
+      cancel_page_reload_timer();
+
+      if (interval_reset && interval !== null) {
+        interval = old_interval;
+        console.log("set interval to " + interval + " on ajax start");
+      }
+      cancel_interval_reset();
+    // }
+  });
+  $(document).ajaxComplete(function(e, jqxhr, settings){
+  // $(document).ajaxStop(function(){
+
+    // if (settings.url === "/updateScore") {
+      currentScore = $("#userCurrentBalance").html();
+      console.log("ajaxStop");
+      console.log(previousScore);
+      console.log(currentScore);
+      if ($(".tile-2048").length > 0){
+        cancel_run_timer();
+        cancel_interval_reset();
+        cancel_page_reload_timer();
+        console.log("page reload in 5 seconds");
+        page_reload_timer = setTimeout("location.reload(true);", 5000);
+
+      }else if (interval !== null && !timer) {
+        console.log("1");
+        console.log(settings.url);
+        console.log(settings.url === "/updateScore");
+        console.log(settings.url == "/updateScore");
+
+        timer = setTimeout("Run()", 3500);
+        if (!interval_reset) {
+          old_interval = interval;
+          interval = 500;
+          console.log("set interval to:" + interval);
+          interval_reset = setTimeout("interval = old_interval; interval_reset = null; console.log('resetting interval to: ' + interval);", 5000);
+        }
+      }
+    // }
+
+  });
+
+  interval = 50;
+  if (!timer) {
+    Run();
+  }
+}
+
+function cancel_interval_reset() {
+  if (interval_reset){
+    window.clearTimeout(interval_reset);
+    interval_reset = null;
+    console.log("clearing interval_reset");
+  }
+}
+
+function cancel_run_timer(){
+  if (timer) {
+    window.clearTimeout(timer);
+    timer = null;
+    console.log("clearing timer");
+  }
+}
+
+function cancel_page_reload_timer(){
+  if (page_reload_timer) {
+    console.log("clearing page_reload_timer");
+    window.clearTimeout(page_reload_timer);
+    page_reload_timer = null;
+  }
+}
+
+// window.alert("Now you can use 2048 AI to complete the game.\n\n" +
+//              "Press '1' to go automatically.\n" +
+//              "Press '2' to get faster.\n" +
+//              "Press '3' to go one step.\n" +
+//              "Press '0' to stop.");
