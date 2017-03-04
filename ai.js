@@ -149,7 +149,7 @@ var previousScore = null;
 
 function Run() {
   RunOneStep();
-  timer = setTimeout("Run()", interval);
+  timer = setTimeout(interval);
 }
 
 function OnKeyPress(event) {
